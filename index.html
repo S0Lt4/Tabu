@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabu Oyunu</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            margin: 0;
+            padding: 0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        h1 {
+            font-size: 3rem;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+        }
+        .timer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff4e50;
+            margin-bottom: 10px;
+        }
+        .word, .banned-words {
+            margin: 15px 0;
+            font-size: 1.2rem;
+        }
+        .banned-words {
+            color: #555;
+            font-style: italic;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        button {
+            background: #ff6a88;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #ff4e50;
+            transform: scale(1.1);
+        }
+        button.pass {
+            background: #6a88ff;
+        }
+        button.pass:hover {
+            background: #4e50ff;
+        }
+        .score {
+            margin-top: 10px;
+            font-size: 1.5rem;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tabu Oyunu</h1>
+    <div class="container">
+        <div class="timer" id="timer">60</div>
+        <div class="word" id="word">Hazırsınız?</div>
+        <div class="banned-words" id="banned-words"></div>
+        <div class="buttons">
+            <button onclick="correct()">Doğru</button>
+            <button class="pass" onclick="pass()">Pas</button>
+        </div>
+        <div class="score">
+            Puan: <span id="score">0</span>
+        </div>
+    </div>
+
+    <script>
+        const words = [
+            { word: "Qar", banned: ["Ağ", "Soyuq", "Yağış", "Dağ", "Qış"] },
+            { word: "Kitab", banned: ["Oxumaq", "Yazı", "Məlumat", "Səhifə", "Üz"] },
+            { word: "Telefon", banned: ["Danışıq", "Mobil", "Zəng", "Sim", "Cib"] },
+            { word: "Şam", banned: ["İşıq", "Mum", "Alov", "Əridilmək", "Şəkil"] },
+            { word: "Ev", banned: ["Yaşamaq", "Otaq", "Dam", "Divar", "Ailə"] },
+            { word: "Məktəb", banned: ["Sinif", "Uşaq", "Təhsil", "Müəllim", "Dərs"] },
+            { word: "Pəncərə", banned: ["Şüşə", "Baxmaq", "Divar", "Çərçivə", "İşıq"] },
+            { word: "Açar", banned: ["Kilid", "Qapı", "Açmaq", "Metal", "Qaytarmaq"] },
+            { word: "Çörək", banned: ["Un", "Biçmək", "Süfrə", "Kərə", "Təndir"] },
+            { word: "Çay", banned: ["İçmək", "Stəkan", "İsti", "Səhər", "Limon"] },
+            { word: "Qələm", banned: ["Yazı", "Kağız", "Dəftər", "Məktəb", "Rəng"] },
+            { word: "Uşaq", banned: ["Kiçik", "Valideyn", "Oyun", "Böyümək", "Ailə"] },
+            { word: "Avtomobil", banned: ["Maşın", "Təkər", "Yol", "Sürmək", "Motor"] },
+            { word: "Təyyarə", banned: ["Hava", "Uçmaq", "Səfər", "Pilot", "Qanad"] },
+            { word: "Ayaqqabı", banned: ["Geyim", "Qıç", "Cüt", "Daban", "Rahat"] },
+            { word: "Qol saatı", banned: ["Vaxt", "Dəqiqə", "Bilək", "Zəng", "Qırmaq"] },
+            { word: "Qapı", banned: ["Açar", "Divar", "Açmaq", "Bağlamaq", "Taxta"] },
+            { word: "Komputer", banned: ["Ekran", "Klavye", "Siçan", "Proqram", "İnternet"] },
+            { word: "İnternet", banned: ["Brauzer", "Wifi", "Səhifə", "Google", "Şəbəkə"] },
+            { word: "Kamera", banned: ["Şəkil", "Çəkmək", "Video", "Ekran", "Linzalar"] },
+            { word: "Əllək", banned: ["Yumaq", "Səbət", "Təmizlik", "Sabun", "Kir"] },
+            { word: "Mətbəx", banned: ["Yemək", "Qazan", "Dəstgah", "Sobadan", "Soyuducu"] },
+            { word: "Paltar", banned: ["Geyim", "Şkaf", "Yumaq", "Moda", "Köməkçi"] },
+            { word: "Stol", banned: ["Taxta", "Oturmaq", "Masa", "Üst", "Divar"] },
+            { word: "Çətir", banned: ["Yağış", "Quru", "Tutmaq", "Dəstə", "Qatı"] },
+            { word: "Pul", banned: ["Kağız", "Cüzdan", "Bank", "Sikkə", "Maaş"] },
+            { word: "Qat", banned: ["Lift", "Mərtəbə", "Yüksək", "Çəkil", "İrəlilə"] },
+            { word: "İşıq", banned: ["Elektrik", "Lampa", "Parlaq", "Yanmaq", "Qaranlıq"] },
+            { word: "Təzə", banned: ["Köhnə", "Yeni", "Xoş", "Yenilik", "Sevmək"] },
+            { word: "Süd", banned: ["İçmək", "Qatı", "İnək", "Ağ", "Qidalanmaq"] },
+            { word: "İdman", banned: ["Qaçış", "Komanda", "Fitnes", "Top", "Hərəkət"] },
+            { word: "Ailə", banned: ["Ana", "Ata", "Ev", "Uşaq", "Qardaş"] },
+            { word: "Dost", banned: ["Yoldaş", "Söhbət", "Şən", "Hörmət", "Görüş"] },
+            { word: "Sahil", banned: ["Dəniz", "Qum", "İstirahət", "Balıq", "Qayıq"] },
+            { word: "Dükan", banned: ["Almaq", "Satış", "Pul", "Qida", "Paket"] },
+            { word: "Teatr", banned: ["Səhnə", "Aktyor", "Pyes", "Tamaşa", "Bilet"] }
+        ];
+
+        let currentWord = 0;
+        let timerValue = 60;
+        let score = 0;
+        let timer;
+        
+        document.getElementById("word").innerText = words[currentWord].word;
+        document.getElementById("banned-words").innerText = "Yasak sözlər: " + words[currentWord].banned.join(", ");
+        
+        function startTimer() {
+            timer = setInterval(() => {
+                timerValue--;
+                document.getElementById("timer").innerText = timerValue;
+                if (timerValue <= 0) {
+                    clearInterval(timer);
+                    alert("Zaman bitdi!");
+                    nextWord();
+                }
+            }, 1000);
+        }
+
+        function nextWord() {
+            currentWord++;
+            if (currentWord < words.length) {
+                document.getElementById("word").innerText = words[currentWord].word;
+                document.getElementById("banned-words").innerText = "Yasak sözlər: " + words[currentWord].banned.join(", ");
+                timerValue = 60;
+                document.getElementById("timer").innerText = timerValue;
+                clearInterval(timer);
+                startTimer();
+            } else {
+                alert("Oyun bitdi!");
+            }
+        }
+
+        function correct() {
+            score++;
+            document.getElementById("score").innerText = score;
+            nextWord();
+        }
+
+        function pass() {
+            nextWord();
+        }
+
+        startTimer();
+    </script>
+</body>
+</html>
